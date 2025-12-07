@@ -1,42 +1,41 @@
-## Locsolo (ESP8266 + GPS + relek + akkuor)
+## Locsolo (ESP8266 + GPS + relék + akkuőr)
 
-Firmware NodeMCU ESP8266-hoz: GPS (GY-NEO6MV2) idot ad, ket relet idozit, web UI-t szolgal ki, es akku feszultseget figyel (LiFePO4 16s).
+Firmware NodeMCU ESP8266-hoz: GY-NEO6MV2 GPS ad időt, két relét időzít, webfelületet szolgál ki, és LiFePO4 16s akku feszültségét felügyeli.
 
-### Hardver bekotes
-- GPS GY-NEO6MV2: TX -> `D7` (ESP RX), RX -> `D8` (opcionalis), GND/GND, VCC/3V3 vagy 5V (modul szerint).
-- Relek: IN1 -> `D1`, IN2 -> `D2`, VCC/5V, GND/GND. `RELAY_ACTIVE_HIGH = true` (ha aktiv alacsony a modul, allitsd `false`-ra).
-- Akku feszultseg: NodeMCU ADC 0-1 V. Hasznalj nagy ellenallasosztot (pl. ~1 MOhm / 18 kOhm) 57.6 V max esetere 1 V alatt. Oszto arany a weben vagy kodban (`batteryDividerRatio`). Bekotes: oszto alja -> `A0`, teteje -> akku +, kozepe -> GND.
+### Hardver bekötés
+- GPS GY-NEO6MV2: TX -> `D7` (ESP RX), RX -> `D8` (opcionális), GND/GND, VCC/3V3 vagy 5V (modul szerint).
+- Relék: IN1 -> `D1`, IN2 -> `D2`, VCC/5V, GND/GND. `RELAY_ACTIVE_HIGH = true` (ha aktív alacsony, állítsd `false`-ra).
+- Akkufeszültség: NodeMCU ADC 0-1 V. Nagy ellenállásosztót használj (pl. ~1 MOhm / 18 kOhm) 57.6 V-hoz 1 V alatt. Osztó arány a weben vagy kódban (`batteryDividerRatio`). Bekötés: osztó alja -> `A0`, teteje -> akku +, közepe -> GND.
 
-### Forditas / fuggosegek
+### Fordítás / függőségek
 - Arduino Core for ESP8266 (2.7+).
-- Konyvtarak: `TinyGPSPlus`, `ESP8266WebServer`, `SoftwareSerial`.
-- Forras: `src/firmware.ino`. Feltoltes: 80 MHz / 4M (FS:1M)/1M.
+- Könyvtárak: `TinyGPSPlus`, `ESP8266WebServer`, `SoftwareSerial`.
+- Forrás: `src/firmware.ino`. Feltöltés: 80 MHz / 4M (FS:1M)/1M.
 
 ### Wi-Fi
-- `WIFI_SSID` / `WIFI_PASSWORD` allitas. AP modban indul, alap IP: `192.168.4.1`.
-- Teljesitmeny kozepes (`WiFi.setOutputPower(10.0f)`), rovid hatotav.
-- Rendszer 10 perc utan lekapcsolja a radiot; a `WIFI_WAKE_PIN` (D5) gomb GND-re huzva ebreszt vagy ujrainditja a 10 perces idozitot.
+- `WIFI_SSID` / `WIFI_PASSWORD` állítás. AP módban indul, alap IP: `192.168.4.1`.
+- Teljesítmény közepes (`WiFi.setOutputPower(10.0f)`), rövid hatótáv.
+- 10 perc után automatikus Wi-Fi kikapcs; a `WIFI_WAKE_PIN` (D5) gomb GND-re húzva ébreszt/újraindítja a 10 perces időzítőt.
 
-### Webfelulet
-- Cim: `http://192.168.4.1/`
-- Statusz: GPS fix, UTC/helyi ido, akku fesz, rele allapotok.
-- Idozitesek: rele-kartyak, max 5 intervallum (kezdet/vege ora:perc), elso sor latszik, tobbi gombbal hozzaadhato, ejjelre atnyulas is megy.
-- Teszt gomb relenkent: 10 mp-re behuzza a rele-t (GPS ido nelkul is mukodik).
-- Altalanos beallitasok: idozona (perc), akku oszto arany, kalibracio, le-/visszakapcsolasi kuszob (hiszterezis), akkuvedelem ki/be. Panel az idozitesek alatt.
-- Gyari visszaallitas: alul gomb, megerosito uzenettel, teljes config torlesevel.
-- Mobilbarat, rugalmas tablazatokkal.
-- Mentes utan automatikus visszairanyitas. EEPROM-ban tarol: idozona, akku parameterek, intervallumok.
+### Webfelület
+- Cím: `http://192.168.4.1/`
+- Státusz: GPS fix, UTC/helyi idő, akku fesz, relé állapotok.
+- Időzítések: relé-kártyák, max 5 intervallum (kezdet/vége óra:perc), első sor látszik, többi gombbal hozzáadható; éjjelre átnyúlás is megy.
+- Teszt gomb relénként: 10 mp-re behúzza a relét (GPS idő nélkül is működik).
+- Általános beállítások: időzóna (perc), akku osztó arány, kalibráció, le-/visszakapcsolási küszöb (hiszterézis), akkuvédelem ki/be. A panel az időzítések alatt.
+- Gyári visszaállítás: alul gomb, megerősítő üzenettel, teljes config törlésével.
+- Mobilbarát, rugalmas táblázatokkal; mentés után automatikus visszairányítás. EEPROM: időzóna, akku paraméterek, intervallumok.
 
-### Ido / GPS
-- GPS-alapu ido (NTP nincs). Ervenyes datum+ido erkezese utan epoch beallit, `millis()`-szel leptet.
-- GPS ido hianyal: relek kikapcsolva, kiveve aktiv teszt alatt.
+### Idő / GPS
+- GPS-alapú idő (NTP nincs). Érvényes dátum+idő után epoch beállít, `millis()`-szel léptet.
+- GPS idő hiányál: relék kikapcsolva, kivéve aktív teszt alatt.
 
-### Relek es akkuor
-- Relek csak akkor mennek: ervenyes GPS ido **es** idozitesi talalat **es** (ha engedelyezett) akku rendben.
-- Akkumeres: `readBatteryVoltage()` oszto arany + kalibracio szerint. Ha ADC nincs kotve (0 V), engedi a releket (ismeretlennek veszi).
-- Akku vedelem hiszterezissel: `batteryThresholdOff` alatt tilt, `batteryThresholdOn` felett ujra enged (pl. 48 V / 50 V).
+### Relék és akkuőr
+- Feltétel: érvényes GPS idő **és** aktív időintervallum **és** (ha engedélyezett) akku OK.
+- Akkumérés: `readBatteryVoltage()` osztó arány + kalibráció szerint. Ha ADC nincs kötve (0 V), engedi a reléket (ismeretlennek veszi).
+- Akkuvédelem hiszterézissel: `batteryThresholdOff` alatt tilt, `batteryThresholdOn` felett újra enged (pl. 48 V / 50 V).
 
-### Testreszabas
-- Intervallumok szama: `MAX_INTERVALS` (alap 5).
-- Aktiv szint: `RELAY_ACTIVE_HIGH`.
-- Pinek, oszto arany a `src/firmware.ino` tetejen allithato.
+### Testreszabás
+- Intervallumok száma: `MAX_INTERVALS` (alap 5).
+- Aktív szint: `RELAY_ACTIVE_HIGH`.
+- Pinek, osztó arány a `src/firmware.ino` tetején állítható.
